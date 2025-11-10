@@ -1,6 +1,6 @@
 {
   "name": "basic-watch-face",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "author": "gthoma17",
   "description": "A simple watch face for Pebble 2 (diorite) that displays time in large font with 12hr/24hr format settings",
   "keywords": ["pebble", "watchface", "time", "diorite"],
