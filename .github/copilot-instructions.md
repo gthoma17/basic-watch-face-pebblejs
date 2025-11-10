@@ -2,100 +2,171 @@
 
 ## Project Overview
 
-This repository contains a simple, elegant watch face application built with the Moddable SDK. The app displays the current time in a large, centered font with configurable 12-hour or 24-hour format.
+This repository contains a simple, elegant watch face built for Pebble 2 (Diorite) using Pebble SDK 3. The watchface displays the current time in a large, centered font and automatically uses the system's 12-hour or 24-hour format preference.
 
 ## Technology Stack
 
-- **Moddable SDK**: IoT and embedded device development platform
-- **JavaScript (ES6+)**: Primary programming language
-- **Node.js 18+**: Development environment
-- **Jest**: Testing framework
+- **Pebble SDK 3**: Official SDK for Pebble smartwatch development
+- **C**: Primary programming language for native Pebble apps
+- **Python 2.7**: Required by Pebble SDK build tools
+- **Waf**: Build system used by Pebble SDK
 - **GitHub Actions**: CI/CD pipeline
 
 ## Project Structure
 
 ```
-basic-watch-face/
+basic-watch-face-pebblejs/
 ├── src/
-│   ├── main.js          # Main watch face application
-│   └── settings.js      # Settings UI for time format configuration
-├── test/
-│   ├── timeFormat.test.js   # Tests for time formatting
-│   └── settings.test.js     # Tests for settings management
+│   └── c/
+│       └── main.c       # Main watchface implementation in C
+├── resources/           # Resources directory (fonts, images)
 ├── .github/
 │   └── workflows/
-│       └── ci.yml       # CI/CD pipeline configuration
-├── manifest.json        # Moddable project manifest
-├── package.json         # Node.js package configuration
-└── README.md           # Project documentation
+│       └── ci.yml      # CI/CD pipeline configuration
+├── package.json        # Pebble project metadata (SDK 3 format)
+├── wscript            # Build configuration for Waf
+└── README.md          # Project documentation
 ```
 
 ## Development Commands
 
-### Install Dependencies
+### Install Pebble SDK
 ```bash
-npm install
+# Install dependencies (Ubuntu/Debian)
+sudo apt-get install python2.7 python-pip python-virtualenv
+
+# Create virtual environment
+virtualenv --python=python2.7 ~/.pebble-sdk
+source ~/.pebble-sdk/bin/activate
+
+# Install Pebble tool
+pip install pebble-tool
+
+# Download and install SDK
+pebble sdk install latest
 ```
 
-### Run Tests
+### Build Watchface
 ```bash
-npm test
+pebble build
 ```
-Tests are written in Jest and cover:
-- Time formatting logic (12-hour and 24-hour formats)
-- Settings persistence
-- Edge cases (midnight, noon, etc.)
+Builds the watchface for all target platforms (Aplite, Basalt, Chalk, Diorite) and creates a `.pbw` file in the `build/` directory.
 
-### Build Application
+### Test in Emulator
 ```bash
-# For simulator (requires Moddable SDK installation)
-npm run build
+# For Diorite (Pebble 2) - primary target
+pebble install --emulator diorite
 
-# For device
-npm run build:device
+# For other platforms
+pebble install --emulator basalt   # Pebble Time
+pebble install --emulator aplite   # Original Pebble
+pebble install --emulator chalk    # Pebble Time Round
 ```
 
-**Note**: Building requires the Moddable SDK to be installed and configured. The SDK must be cloned and built separately. Environment variables `MODDABLE` and `PATH` must be set appropriately.
+### Install on Real Device
+```bash
+pebble install --phone <PEBBLE_IP_ADDRESS>
+```
+
+**Note**: Requires Developer Mode enabled on the Pebble watch and both devices on the same network.
 
 ## Code Style and Conventions
 
-1. **JavaScript Style**:
-   - Use modern ES6+ features
-   - Follow existing code patterns in the repository
-   - Maintain consistent indentation (tabs/spaces as per existing files)
+1. **C Style**:
+   - Follow Pebble SDK conventions
+   - Use snake_case for function and variable names
+   - Use s_ prefix for static variables
+   - Keep code simple and efficient for embedded device
 
-2. **Testing**:
-   - All new features should include corresponding Jest tests
-   - Tests should be placed in the `test/` directory
-   - Follow the naming convention: `<feature>.test.js`
-   - Tests should cover edge cases (midnight, noon, format transitions)
+2. **Resource Naming**:
+   - Use UPPER_CASE for resource identifiers
+   - Font resources: FONT_NAME_SIZE format
+   - Bitmap resources: descriptive names like BACKGROUND_IMAGE
 
 3. **Documentation**:
    - Update README.md when adding new features
    - Include inline comments for complex logic
-   - Keep package.json scripts documented
+   - Keep package.json metadata current
+
+## Pebble SDK Specifics
+
+### package.json Structure
+
+The package.json file contains Pebble-specific metadata in the "pebble" section:
+
+```json
+{
+  "pebble": {
+    "sdkVersion": "3.0",
+    "projectType": "native",
+    "watchapp": {
+      "watchface": true
+    },
+    "uuid": "unique-app-identifier",
+    "targetPlatforms": ["aplite", "basalt", "chalk", "diorite"],
+    "resources": {
+      "media": []
+    }
+  }
+}
+```
+
+Key fields:
+- `watchface: true` - Identifies this as a watchface (not a regular app)
+- `uuid` - Unique identifier for the app
+- `targetPlatforms` - Supported Pebble models
+- `sdkVersion` - Pebble SDK version
+
+### wscript Configuration
+
+The wscript file tells Waf how to build the project:
+- Source files are in `src/c/`
+- Resources are in `resources/`
+- Builds for all target platforms automatically
+
+### C Code Structure
+
+Pebble C applications follow this pattern:
+```c
+static void init() {
+  // Initialize window, layers, services
+}
+
+static void deinit() {
+  // Clean up resources
+}
+
+int main(void) {
+  init();
+  app_event_loop();  // Blocks until app exits
+  deinit();
+}
+```
+
+Key Pebble APIs used:
+- `Window` - Main container
+- `TextLayer` - Display text
+- `tick_timer_service_subscribe()` - Update every minute
+- `clock_is_24h_style()` - System time format preference
 
 ## Common Development Workflows
 
 ### Adding a New Feature
-1. Write tests first (TDD approach preferred)
-2. Implement the feature in `src/`
-3. Update manifest.json if new modules are added
-4. Run tests: `npm test`
-5. Update README.md if user-facing changes are made
+1. Modify `src/c/main.c`
+2. If adding resources, update `resources/` and `package.json`
+3. Build: `pebble build`
+4. Test: `pebble install --emulator diorite`
+5. Update README.md if user-facing changes
 
 ### Fixing a Bug
-1. Add a failing test that reproduces the bug
-2. Fix the bug in the source code
-3. Verify the test passes
-4. Run full test suite to ensure no regressions
+1. Fix the bug in C source
+2. Build and test locally
+3. Verify on multiple platforms if applicable
 
-### Updating Dependencies
-1. Check for compatibility with Moddable SDK
-2. Update package.json
-3. Run `npm install`
-4. Run full test suite
-5. Test build process if SDK-related changes
+### Adding Resources
+1. Add files to `resources/` directory
+2. Update `package.json` "pebble.resources.media" section
+3. Reference in C code with generated resource IDs
 
 ## CI/CD Pipeline
 
@@ -105,47 +176,42 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on:
 - Version tags (format: `v*`)
 
 Pipeline stages:
-1. **Test**: Runs Jest test suite
-2. **Build**: Compiles Moddable application (may fail if SDK setup is incomplete)
-3. **Release**: Creates GitHub releases for version tags with build artifacts
+1. **Build**: Compiles Pebble watchface for all platforms using Pebble SDK
+2. **Release**: Creates GitHub releases for version tags with `.pbw` artifact
 
 ## Important Notes
 
-1. **Moddable SDK Specifics**:
-   - The SDK is not included in the repository
-   - Build steps in CI may continue-on-error due to SDK complexity
-   - Local development requires manual SDK installation
+1. **Platform Support**:
+   - Primary target: Pebble 2 (Diorite) / Pebble OS v4.9.76
+   - Also supports: Aplite, Basalt, Chalk
+   - Built with Pebble SDK 3.x
 
-2. **Settings Persistence**:
-   - Uses Moddable Preference API
-   - Settings survive app restarts
-   - Test mocks should simulate preference storage
+2. **Time Format**:
+   - Uses system preference via `clock_is_24h_style()`
+   - No separate settings UI needed
+   - Updates every minute via `tick_timer_service_subscribe()`
 
-3. **Time Formatting**:
-   - Handles both 12-hour (with AM/PM) and 24-hour formats
-   - Edge cases: midnight (00:00/12:00 AM), noon (12:00/12:00 PM)
-   - Padding: single-digit hours may or may not have leading zeros depending on format
+3. **Build System**:
+   - Uses Waf (via Pebble SDK)
+   - Requires Python 2.7
+   - Output: `.pbw` file (Pebble Watch Bundle)
+
+4. **No JavaScript**:
+   - This is a pure C native watchface
+   - No PebbleJS or JavaScript components
+   - Better performance and battery life
 
 ## Minimal Changes Philosophy
 
 When making changes to this repository:
 - Make the smallest possible modifications to achieve the goal
-- Preserve working code and tests
-- Don't refactor unrelated code
+- Preserve working code
 - Focus on surgical, precise changes
-- Validate changes don't break existing functionality
-
-## Testing Requirements
-
-Before submitting changes:
-1. Run `npm test` to ensure all tests pass
-2. Add tests for new functionality
-3. Verify edge cases are covered
-4. Check that CI pipeline will succeed
+- Test on emulator before committing
 
 ## Getting Help
 
-- Review the [Moddable SDK documentation](https://github.com/Moddable-OpenSource/moddable)
-- Check existing tests for examples of expected behavior
+- Review the [Pebble SDK documentation](https://developer.rebble.io/)
+- Check existing C code structure for examples
 - Refer to README.md for setup instructions
 - Look at CI workflow for build requirements

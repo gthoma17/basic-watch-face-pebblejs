@@ -1,17 +1,29 @@
 {
   "name": "basic-watch-face",
   "version": "1.0.0",
-  "description": "A simple watch face using Moddable SDK that displays time in large font with 12hr/24hr format settings",
-  "keywords": ["moddable", "watchface", "time", "smartwatch"],
-  "author": "",
+  "author": "gthoma17",
+  "description": "A simple watch face for Pebble 2 (diorite) that displays time in large font with 12hr/24hr format settings",
+  "keywords": ["pebble", "watchface", "time", "diorite"],
   "license": "MIT",
-  "scripts": {
-    "test": "jest",
-    "build": "mcconfig -d -m -p simulator",
-    "build:device": "mcconfig -d -m",
-    "build:pbw": "./scripts/build-pbw.sh"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0"
+  "private": true,
+  "pebble": {
+    "sdkVersion": "3.0",
+    "projectType": "native",
+    "watchapp": {
+      "watchface": true
+    },
+    "uuid": "593d9251-cd4c-4cf9-af93-375850e6c5a1",
+    "capabilities": [],
+    "companyName": "gthoma17",
+    "displayName": "Basic Watch Face",
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite"
+    ],
+    "resources": {
+      "media": []
+    }
   }
 }
