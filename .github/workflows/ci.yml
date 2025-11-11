@@ -10,6 +10,8 @@ jobs:
   build:
     name: Build Pebble Watchface
     runs-on: ubuntu-latest
+    container:
+      image: python:2.7
     
     permissions:
       contents: read
@@ -20,22 +22,15 @@ jobs:
       with:
         fetch-depth: 0
       
-    - name: Setup Python 2.7
-      uses: actions/setup-python@v4
-      with:
-        python-version: '2.7'
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y git libfreetype6-dev libffi-dev libglib2.0-dev pkg-config
         
     - name: Install Pebble SDK
       run: |
-        # Install dependencies
-        sudo apt-get update
-        sudo apt-get install -y python-pip python-dev libfreetype6-dev libffi-dev libglib2.0-dev
-        
         # Install pebble-tool
-        pip install --user pebble-tool
-        
-        # Add pip user bin to PATH
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        pip install pebble-tool
         
     - name: Install Pebble SDK
       run: |
