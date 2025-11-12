@@ -46,8 +46,8 @@ jobs:
         # Install pebble-tool with --no-deps to avoid dependency conflicts
         pip2.7 install --user --no-deps pebble-tool
         
-        # Install remaining dependencies
-        pip2.7 install --user pyserial requests websocket-client progressbar2 colorama oauth2client sh python-dateutil
+        # Install remaining dependencies with Python 2.7 compatible versions
+        pip2.7 install --user pyserial 'requests<2.28' websocket-client 'progressbar2<4' colorama 'rsa<4.8' 'oauth2client<5' sh 'python-dateutil<3'
         
         # Add pip user bin to PATH
         echo "$HOME/.local/bin" >> $GITHUB_PATH
