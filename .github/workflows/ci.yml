@@ -40,8 +40,14 @@ jobs:
         
     - name: Install Pebble SDK
       run: |
-        # Install pebble-tool
-        pip2.7 install --user pebble-tool
+        # Install compatible dependencies first
+        pip2.7 install --user 'freetype-py<2.2' 'httplib2>=0.19.0' 'pyasn1-modules>=0.0.6'
+        
+        # Install pebble-tool with --no-deps to avoid dependency conflicts
+        pip2.7 install --user --no-deps pebble-tool
+        
+        # Install remaining dependencies
+        pip2.7 install --user pyserial requests websocket-client progressbar2 colorama oauth2client sh python-dateutil
         
         # Add pip user bin to PATH
         echo "$HOME/.local/bin" >> $GITHUB_PATH
