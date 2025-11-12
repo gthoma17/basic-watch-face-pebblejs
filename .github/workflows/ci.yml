@@ -43,8 +43,9 @@ jobs:
         # Install compatible dependencies first
         pip2.7 install --user 'freetype-py<2.2' 'httplib2>=0.19.0' 'pyasn1-modules>=0.0.6'
         
-        # Install pebble-tool with --no-deps to avoid dependency conflicts
-        pip2.7 install --user --no-deps pebble-tool
+        # Install pebble-tool 4.5 (last version compatible with Python 2.7)
+        # Version 5.0+ uses Python 3 f-strings which are incompatible with Python 2.7
+        pip2.7 install --user --no-deps 'pebble-tool==4.5'
         
         # Install remaining dependencies with Python 2.7 compatible versions
         # rsa 4.7+ requires Python 3.5+, version 4.6 doesn't exist, so we use 4.5
