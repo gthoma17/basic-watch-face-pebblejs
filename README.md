@@ -32,7 +32,7 @@ See the Development section below.
 ### Prerequisites
 
 - Pebble SDK 3.x or higher
-- Python 2.7 (required by Pebble SDK)
+- Python 3.7+ (required by modern pebble-tool)
 - Git
 
 ### Setting Up the Pebble SDK
@@ -43,10 +43,10 @@ Follow the official guide to install the Pebble SDK:
 For quick setup on Linux/macOS:
 ```bash
 # Install SDK dependencies
-sudo apt-get install python2.7 python-pip python-virtualenv
+sudo apt-get install python3 python3-pip python3-venv
 
 # Create a virtual environment and install Pebble tool
-virtualenv --python=python2.7 ~/.pebble-sdk
+python3 -m venv ~/.pebble-sdk
 source ~/.pebble-sdk/bin/activate
 pip install pebble-tool
 
