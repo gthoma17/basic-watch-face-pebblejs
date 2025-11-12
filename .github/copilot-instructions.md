@@ -179,6 +179,67 @@ Pipeline stages:
 1. **Build**: Compiles Pebble watchface for all platforms using Pebble SDK
 2. **Release**: Creates GitHub releases for version tags with `.pbw` artifact
 
+### Testing Workflow Changes Locally
+
+**CRITICAL**: Before submitting any changes to `.github/workflows/ci.yml`, you MUST test the workflow locally using [act](https://github.com/nektos/act).
+
+#### Install act
+```bash
+# On macOS
+brew install act
+
+# On Linux
+curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+# On Windows (with Chocolatey)
+choco install act-cli
+```
+
+#### Test Workflow Locally
+```bash
+# Test the build job
+act -j build
+
+# Test with specific event
+act pull_request -j build
+
+# Test with verbose output
+act -j build -v
+
+# Test with secrets (if needed)
+act -j build -s GITHUB_TOKEN=your_token
+```
+
+#### Workflow Testing Requirements
+When modifying the CI/CD pipeline:
+1. **ALWAYS** run `act -j build` locally before committing
+2. Verify all steps complete successfully
+3. Check that dependencies install correctly
+4. Ensure build artifacts are created
+5. Fix any errors before pushing changes
+
+#### Common act Commands
+```bash
+# List all available jobs
+act -l
+
+# Run specific job with ubuntu-22.04 runner
+act -j build --container-architecture linux/amd64
+
+# Dry run (show what would run without executing)
+act -j build -n
+
+# Use specific Docker image for runner
+act -j build -P ubuntu-22.04=catthehacker/ubuntu:act-22.04
+```
+
+#### Troubleshooting act
+- If you encounter Docker permission issues: Add your user to the docker group or use `sudo act`
+- For platform-specific issues: Use `--container-architecture linux/amd64`
+- For large workflows: Increase Docker memory limits in Docker Desktop settings
+
+**Note**: Testing locally catches issues early and prevents wasting CI/CD minutes and reviewer time.
+
 ## Important Notes
 
 1. **Platform Support**:
