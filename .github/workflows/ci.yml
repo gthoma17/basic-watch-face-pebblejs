@@ -9,9 +9,7 @@ on:
 jobs:
   build:
     name: Build Pebble Watchface
-    runs-on: ubuntu-latest
-    container:
-      image: python:2.7
+    runs-on: ubuntu-22.04
     
     permissions:
       contents: read
@@ -22,15 +20,31 @@ jobs:
       with:
         fetch-depth: 0
       
-    - name: Install system dependencies
+    - name: Install Python 2.7
       run: |
-        apt-get update
-        apt-get install -y git libfreetype6-dev libffi-dev libglib2.0-dev pkg-config
+        # Add deadsnakes PPA for Python 2.7
+        sudo apt-get update
+        sudo apt-get install -y software-properties-common
+        sudo add-apt-repository -y ppa:deadsnakes/ppa
+        sudo apt-get update
+        
+        # Install Python 2.7 and dependencies
+        sudo apt-get install -y python2.7 python2.7-dev curl
+        
+        # Install pip for Python 2.7
+        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+        sudo python2.7 get-pip.py
+        
+        # Install additional dependencies needed for Pebble SDK
+        sudo apt-get install -y libfreetype6-dev libffi-dev libglib2.0-dev pkg-config
         
     - name: Install Pebble SDK
       run: |
         # Install pebble-tool
-        pip install pebble-tool
+        pip2.7 install --user pebble-tool
+        
+        # Add pip user bin to PATH
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
         
     - name: Install Pebble SDK
       run: |
