@@ -20,39 +20,24 @@ jobs:
       with:
         fetch-depth: 0
       
-    - name: Install Python 2.7
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install system dependencies
       run: |
-        # Add deadsnakes PPA for Python 2.7
-        sudo apt-get update
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository -y ppa:deadsnakes/ppa
-        sudo apt-get update
-        
-        # Install Python 2.7 and dependencies
-        sudo apt-get install -y python2.7 python2.7-dev curl
-        
-        # Install pip for Python 2.7
-        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-        sudo python2.7 get-pip.py
-        
         # Install additional dependencies needed for Pebble SDK
+        sudo apt-get update
         sudo apt-get install -y libfreetype6-dev libffi-dev libglib2.0-dev pkg-config
         
     - name: Install Pebble SDK
       run: |
-        # Install compatible dependencies first
-        pip2.7 install --user 'freetype-py<2.2' 'httplib2>=0.19.0' 'pyasn1-modules>=0.0.6'
+        # Install pebble-tool (latest version works with Python 3)
+        pip install pebble-tool
         
-        # Install pebble-tool 4.5 (last version compatible with Python 2.7)
-        # Version 5.0+ uses Python 3 f-strings which are incompatible with Python 2.7
-        pip2.7 install --user --no-deps 'pebble-tool==4.5'
-        
-        # Install remaining dependencies with Python 2.7 compatible versions
-        # rsa 4.7+ requires Python 3.5+, version 4.6 doesn't exist, so we use 4.5
-        pip2.7 install --user pyserial 'requests<2.28' websocket-client 'progressbar2<4' colorama 'rsa==4.5' 'oauth2client<5' sh 'python-dateutil<3'
-        
-        # Add pip user bin to PATH
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        # Verify installation
+        pebble --version
         
     - name: Install Pebble SDK
       run: |
