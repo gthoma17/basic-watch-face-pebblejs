@@ -1,0 +1,16 @@
+{
+  "uuid": "922b439a-a4ab-4426-a45a-9b104543f028",
+  "shortName": "BasicWatch",
+  "longName": "Basic Watch Face",
+  "companyName": "gthoma17",
+  "versionLabel": "1.0.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt", "chalk", "diorite"],
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {},
+  "resources": {
+    "media": []
+  }
+}

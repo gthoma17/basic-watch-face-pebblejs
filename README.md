@@ -1,15 +1,18 @@
 # Basic Watch Face
 
-A simple, elegant watch face application built with the Moddable SDK. Displays the current time in a large, centered font with configurable 12-hour or 24-hour format.
+A simple, elegant watch face for Pebble smartwatches. Displays the current time in a large, centered font with automatic 12-hour or 24-hour format based on system settings.
 
 ## Features
 
 - **Clean Design**: Time displayed in large, bold font centered on the screen
-- **Configurable Format**: Switch between 12-hour and 24-hour time display
-- **Persistent Settings**: Your time format preference is saved across app restarts
-- **Modern JavaScript**: Built using the Moddable SDK with modern JavaScript (ES6+)
-- **Automated Testing**: Comprehensive test suite with CI/CD pipeline
-- **Continuous Deployment**: Automated builds and releases via GitHub Actions
+- **Automatic Format**: Respects system 12-hour/24-hour time preference
+- **Universal Compatibility**: Works on all Pebble platforms (Aplite, Basalt, Chalk, Diorite)
+- **Lightweight**: Minimal resource usage, efficient C implementation
+- **Classic Pebble SDK 3**: Built with the standard Pebble SDK
+
+## Target Device
+
+This watchface is optimized for Pebble 2 (diorite platform) running Pebble OS v4.9.76, but is compatible with all Pebble watches.
 
 ## Screenshots
 
@@ -19,86 +22,111 @@ The watch face displays the current time in the center of the screen with a clea
 
 ### Prerequisites
 
-- Node.js 18 or higher
-- Moddable SDK (for building and running the app)
+- Pebble SDK 3 or later (Python 3 version recommended)
 - Git
+- A Pebble device or emulator
+
+### Setting up Pebble SDK
+
+**Option 1: Using Community Fork (Recommended - Python 3)**
+
+The community maintains a Python 3 compatible version of the Pebble SDK:
+
+```bash
+# Install dependencies (Ubuntu/Debian)
+sudo apt-get install python3-pip python3-dev python3-virtualenv
+
+# Create and activate virtual environment
+python3 -m venv ~/.pebble-sdk
+source ~/.pebble-sdk/bin/activate
+
+# Install Pebble SDK
+pip3 install pebble-sdk
+
+# Verify installation
+pebble --version
+```
+
+**Option 2: Using RebbleOS SDK**
+
+For rePebble/community-maintained Pebble devices, you can use the RebbleOS SDK tools.
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/gthoma17/basic-watch-face.git
-cd basic-watch-face
+git clone https://github.com/gthoma17/basic-watch-face-pebblejs.git
+cd basic-watch-face-pebblejs
 ```
 
-2. Install dependencies:
+2. Ensure Pebble SDK is activated:
 ```bash
-npm install
-```
-
-3. Install Moddable SDK (if not already installed):
-```bash
-cd ~
-git clone https://github.com/Moddable-OpenSource/moddable.git
-cd moddable/build/makefiles/lin  # or mac or win depending on your OS
-make
-```
-
-4. Set up environment variables:
-```bash
-export MODDABLE=~/moddable
-export PATH=$MODDABLE/build/bin/lin/release:$PATH
+source ~/.pebble-sdk/bin/activate  # if using virtualenv
 ```
 
 ### Building
 
-To build and run in the simulator:
+To build the watchface:
 ```bash
-npm run build
+pebble build
 ```
 
-To build for a specific device:
+This will create a `.pbw` file in the `build/` directory that can be sideloaded to your Pebble watch.
+
+To build for a specific platform:
 ```bash
-npm run build:device
+pebble build --platform diorite  # Pebble 2
+pebble build --platform basalt   # Pebble Time
+pebble build --platform chalk    # Pebble Time Round
+pebble build --platform aplite   # Original Pebble
 ```
 
-### Testing
+### Installing to Device
 
-Run the test suite:
+**To Emulator:**
 ```bash
-npm test
+pebble install --emulator basalt
 ```
 
-Tests cover:
-- Time formatting logic (12-hour and 24-hour formats)
-- Settings persistence
-- Edge cases (midnight, noon, etc.)
+**To Physical Device:**
+1. Enable Developer Mode on your Pebble watch
+2. Connect your watch to your phone
+3. Run:
+```bash
+pebble install --phone <PHONE_IP_ADDRESS>
+```
+
+**Manual Installation:**
+1. Build the watchface: `pebble build`
+2. Find the `.pbw` file in `build/`
+3. Transfer to your phone
+4. Open with Pebble app to sideload
 
 ### Project Structure
 
 ```
-basic-watch-face/
+basic-watch-face-pebblejs/
 ├── src/
-│   ├── main.js          # Main watch face application
-│   └── settings.js      # Settings UI for time format configuration
-├── test/
-│   ├── timeFormat.test.js   # Tests for time formatting
-│   └── settings.test.js     # Tests for settings management
+│   └── c/
+│       └── main.c           # Main watch face C implementation
+├── resources/               # (Optional) Images, fonts, etc.
+├── appinfo.json            # App metadata and configuration
+├── wscript                 # Build configuration
 ├── .github/
 │   └── workflows/
-│       └── ci.yml       # CI/CD pipeline configuration
-├── manifest.json        # Moddable project manifest
-├── package.json         # Node.js package configuration
-└── README.md           # This file
+│       └── ci.yml          # CI/CD pipeline configuration
+├── package.json            # Node.js package configuration (for CI)
+└── README.md              # This file
 ```
 
-## Settings
+## How It Works
 
-The watch face includes a settings page accessible through the Moddable simulator or device:
+The watchface is implemented in C using the Pebble SDK:
 
-- **Use 24-Hour Format**: Toggle between 12-hour (default) and 24-hour time display
-
-Settings are persisted using the Moddable Preference API and will be remembered across app restarts.
+1. **Time Display**: Uses a `TextLayer` with system font to display time
+2. **Updates**: Subscribes to `TickTimerService` to update every minute
+3. **Format**: Automatically uses 12-hour or 24-hour format based on system settings via `clock_is_24h_style()`
+4. **Compatibility**: Uses `PBL_IF_ROUND_ELSE` macro for round vs rectangular screen layout
 
 ## CI/CD Pipeline
 
@@ -106,52 +134,53 @@ The project includes a GitHub Actions workflow that automatically builds and pub
 
 ### Pipeline Jobs
 
-1. **Test**: Runs the Jest test suite on every push and pull request
-2. **Build**: Creates a `.pbw` (Pebble Watch Bundle) artifact containing the packaged watch face
-3. **Release**: Automatically creates GitHub releases with the `.pbw` artifact attached when version tags are pushed
+1. **Build**: Creates a `.pbw` (Pebble Watch Bundle) artifact for all supported platforms
+2. **Release**: Automatically creates GitHub releases with the `.pbw` artifact when version tags are pushed
 
 ### Creating a Release
 
 To create a new release and publish the watch face:
 
-1. Update the version in `package.json` if needed
+1. Update the version in `appinfo.json`
 2. Commit your changes:
    ```bash
    git add .
    git commit -m "Prepare release vX.Y.Z"
    ```
 
-3. Create and push a version tag (format: `vX.Y.Z`):
+3. Create and push a version tag:
    ```bash
    git tag v1.0.0
    git push origin v1.0.0
    ```
 
 4. The CI/CD pipeline will automatically:
-   - Run all tests
-   - Build the watch face and create the `.pbw` artifact
+   - Build the watch face for all platforms
    - Create a GitHub release with the tag
    - Attach the `.pbw` file to the release
    - Generate release notes from commits
 
 ### Release Artifact
 
-Each release includes a `basic-watch-face-X.Y.Z.pbw` file that contains:
-- Application source code (`src/main.js`, `src/settings.js`)
-- Manifest configuration (`manifest.json`)
-- Package metadata with build information
+Each release includes a `basic-watch-face.pbw` file that can be:
+- Sideloaded directly to a Pebble watch via the mobile app
+- Installed using `pebble install --pbw basic-watch-face.pbw`
+- Distributed to users for manual installation
 
-The `.pbw` file is a standard zip archive that can be extracted and inspected if needed.
+## Customization
 
-### Manual Build
+To customize the watchface, edit `src/c/main.c`:
 
-You can also build the `.pbw` artifact locally:
+- **Font**: Change `FONT_KEY_BITHAM_42_BOLD` to another system font
+- **Colors**: Modify `GColorWhite` and `GColorBlack` 
+- **Position**: Adjust the `GRect` coordinates in `text_layer_create()`
+- **Update Frequency**: Change `MINUTE_UNIT` to `SECOND_UNIT` for seconds display
 
-```bash
-./scripts/build-pbw.sh 1.0.0
-```
-
-This will create `build/basic-watch-face-1.0.0.pbw` in your local directory.
+Available system fonts include:
+- `FONT_KEY_BITHAM_42_BOLD`
+- `FONT_KEY_GOTHIC_28_BOLD`
+- `FONT_KEY_ROBOTO_CONDENSED_21`
+- And many more in the Pebble SDK documentation
 
 ## License
 
@@ -163,5 +192,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgments
 
-- Built with [Moddable SDK](https://github.com/Moddable-OpenSource/moddable)
-- Inspired by the need for simple, customizable watch faces
+- Built with [Pebble SDK 3](https://developer.rebble.io/)
+- Supports [Rebble](https://rebble.io/) services for Pebble devices
+- Inspired by the need for simple, reliable watch faces

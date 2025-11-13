@@ -1,50 +1,56 @@
 #!/bin/bash
 
-# Build script to create .pbw (Pebble Watch Bundle) artifact
-# This script packages the Moddable application into a .pbw file for distribution
+# Build script for Pebble SDK watchface
+# Creates .pbw (Pebble Watch Bundle) using Pebble SDK
 
 set -e
 
-# Get version from package.json or use default
 VERSION=${1:-"1.0.0"}
 APP_NAME="basic-watch-face"
 BUILD_DIR="build"
-PBW_NAME="${APP_NAME}-${VERSION}.pbw"
 
-echo "Building ${APP_NAME} version ${VERSION}..."
+echo "Building Pebble watchface ${APP_NAME} version ${VERSION}..."
 
-# Create build directory structure
-mkdir -p "${BUILD_DIR}/app"
+# Check if we're in a Pebble SDK environment
+if ! command -v pebble &> /dev/null; then
+    echo "Warning: Pebble SDK not found in PATH"
+    echo "Attempting to install Pebble SDK with Python 3..."
+    
+    # Create virtual environment if it doesn't exist
+    if [ ! -d "$HOME/.pebble-sdk" ]; then
+        python3 -m venv "$HOME/.pebble-sdk"
+    fi
+    
+    # Activate virtual environment
+    source "$HOME/.pebble-sdk/bin/activate"
+    
+    # Install Pebble SDK
+    pip3 install --upgrade pip setuptools wheel
+    pip3 install pebble-sdk
+    
+    echo "Pebble SDK installed successfully"
+fi
 
-# Copy application files to build directory
-echo "Packaging application files..."
-cp -r src/* "${BUILD_DIR}/app/" 2>/dev/null || true
-cp manifest.json "${BUILD_DIR}/" 2>/dev/null || true
+# Clean any previous builds
+echo "Cleaning previous builds..."
+pebble clean || true
+rm -rf "${BUILD_DIR}"
 
-# Create package info file
-cat > "${BUILD_DIR}/package.json" << EOF
-{
-  "name": "${APP_NAME}",
-  "version": "${VERSION}",
-  "description": "A simple watch face using Moddable SDK",
-  "type": "watchface",
-  "buildDate": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-}
-EOF
+# Build the watchface for all platforms
+echo "Building watchface..."
+pebble build
 
-# Package as .pbw (which is a zip file)
-echo "Creating .pbw bundle..."
-cd "${BUILD_DIR}"
-zip -q -r "../${PBW_NAME}" . -x "*.DS_Store"
-cd ..
+# Check if build was successful
+if [ -f "${BUILD_DIR}/${APP_NAME}.pbw" ]; then
+    echo "✓ Successfully created ${BUILD_DIR}/${APP_NAME}.pbw"
+    echo ""
+    echo "Build artifact details:"
+    ls -lh "${BUILD_DIR}/${APP_NAME}.pbw"
+    echo ""
+    echo "To install on device: pebble install --phone <PHONE_IP>"
+    echo "To install on emulator: pebble install --emulator basalt"
+else
+    echo "✗ Build failed - no .pbw file created"
+    exit 1
+fi
 
-# Move .pbw back to build directory
-mv "${PBW_NAME}" "${BUILD_DIR}/"
-
-echo "✓ Successfully created ${BUILD_DIR}/${PBW_NAME}"
-echo "Build artifact ready for distribution"
-
-# List contents for verification
-echo ""
-echo "Build artifact details:"
-ls -lh "${BUILD_DIR}/${PBW_NAME}"
