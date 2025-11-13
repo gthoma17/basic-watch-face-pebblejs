@@ -28,42 +28,46 @@ The watch face displays the current time in the center of the screen with a clea
 
 ### Setting up Pebble SDK
 
-**Option 1: Using pebble-tool (Recommended - Python 3)**
+**Option 1: Using Cloud IDE (Easiest)**
 
-The community maintains a Python 3 compatible version of the Pebble tools:
+The easiest way to start building is with the [Cloud IDE](https://developer.repebble.com/ide/) - no installation required! It runs entirely in your browser.
 
+**Option 2: Local Installation (Recommended for Development)**
+
+Full instructions are available at [developer.repebble.com/sdk](https://developer.repebble.com/sdk/).
+
+**Ubuntu/Debian:**
 ```bash
-# Install dependencies (Ubuntu/Debian)
-sudo apt-get install python3-pip python3-dev python3-virtualenv
+# Install dependencies
+sudo apt install python3-pip python3-venv nodejs npm libsdl1.2debian libfdt1
 
-# Create and activate virtual environment
-python3 -m venv ~/.pebble-sdk
-source ~/.pebble-sdk/bin/activate
+# Install uv (fast Python package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install pebble-tool (not pebble-sdk)
-pip3 install pebble-tool
+# Install Pebble CLI
+uv tool install pebble-tool
 
-# Verify installation
-pebble --version
+# Install the latest SDK
+pebble sdk install latest
 ```
 
-**Important Note**: Due to Pebble's shutdown, the official SDK download servers (sdk.core.store) are no longer operational. To complete the SDK setup, you'll need to obtain the SDK core files through alternative means:
-
-1. **Use a local SDK installation** if you have one from before Pebble's shutdown
-2. **Use RebbleOS SDK** - Check [Rebble's developer resources](https://developer.rebble.io/)
-3. **Find community mirrors** of the SDK core files
-
-**Option 2: Docker-based Pebble SDK**
-
-You can use a Docker container with a pre-configured Pebble SDK:
-
+**macOS:**
 ```bash
-# Pull a community Pebble SDK Docker image
-docker pull pebble/sdk
+# Install Python 3.10+ (not the default 3.9)
+brew install python
 
-# Build from within the container
-docker run --rm -v "$(pwd):/pebble" pebble/sdk pebble build
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Pebble CLI
+uv tool install pebble-tool
+
+# Install the latest SDK
+pebble sdk install latest
 ```
+
+**Windows:**
+The Pebble SDK does not run on Windows, but you can use WSL. Install Ubuntu in WSL, then follow the Ubuntu instructions above.
 
 ### Installation
 
@@ -73,10 +77,7 @@ git clone https://github.com/gthoma17/basic-watch-face-pebblejs.git
 cd basic-watch-face-pebblejs
 ```
 
-2. Ensure Pebble SDK is activated:
-```bash
-source ~/.pebble-sdk/bin/activate  # if using virtualenv
-```
+2. Install the Pebble SDK (if not already installed - see above)
 
 ### Building
 
@@ -102,10 +103,22 @@ pebble build --platform aplite   # Original Pebble
 pebble install --emulator basalt
 ```
 
-**To Physical Device:**
+**To Physical Device (via CloudPebble):**
+
+Requires the new Pebble mobile app (install at [rePebble.com/app](https://www.repebble.com/app)):
+1. Open the Pebble app on your phone
+2. Go to Devices → tap 3 dots → Enable Dev Connect → Sign into GitHub
+3. On your computer, run:
+```bash
+pebble login  # Sign into GitHub
+pebble install --cloudpebble
+```
+
+**Alternative - Direct IP Installation:**
 1. Enable Developer Mode on your Pebble watch
 2. Connect your watch to your phone
-3. Run:
+3. Find your phone's IP address
+4. Run:
 ```bash
 pebble install --phone <PHONE_IP_ADDRESS>
 ```

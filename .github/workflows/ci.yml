@@ -29,47 +29,42 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          python3-pip python3-dev python3-virtualenv \
+          python3-pip python3-venv nodejs npm \
+          libsdl1.2debian libfdt1 \
           libfreetype6-dev libpng-dev pkg-config \
           libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev \
           gcc-arm-none-eabi libnewlib-arm-none-eabi
         
-    - name: Setup Pebble SDK
+    - name: Install uv and Pebble SDK
       run: |
-        python3 -m venv ~/.pebble-sdk
-        source ~/.pebble-sdk/bin/activate
-        pip3 install --upgrade pip setuptools wheel
-        pip3 install pebble-tool
-        echo "$HOME/.pebble-sdk/bin" >> $GITHUB_PATH
+        # Install uv (fast Python package manager)
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        
+        # Add uv to PATH
+        export PATH="$HOME/.cargo/bin:$PATH"
+        
+        # Install pebble-tool
+        uv tool install pebble-tool
+        
+        # Add pebble to PATH
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
         
     - name: Verify Pebble SDK installation
       run: |
-        source ~/.pebble-sdk/bin/activate
+        export PATH="$HOME/.local/bin:$PATH"
         pebble --version
         
-    - name: Download and setup Pebble SDK Core
+    - name: Install Pebble SDK Core
       run: |
-        source ~/.pebble-sdk/bin/activate
-        # Try to install SDK, but continue if it fails (server may be down)
-        pebble sdk install latest || echo "SDK download failed - may need manual SDK installation"
+        export PATH="$HOME/.local/bin:$PATH"
+        pebble sdk install latest
         
-    - name: Build watchface (if SDK available)
-      continue-on-error: true
+    - name: Build watchface
       run: |
-        source ~/.pebble-sdk/bin/activate
+        export PATH="$HOME/.local/bin:$PATH"
         pebble clean || true
-        pebble build || echo "Build failed - SDK may not be fully configured"
-        ls -la build/ || echo "No build directory created"
-        
-    - name: Create placeholder artifact if build failed
-      run: |
-        if [ ! -f build/*.pbw ]; then
-          echo "Note: Actual .pbw build requires a fully configured Pebble SDK environment."
-          echo "The project structure is valid and ready for development."
-          echo "To build locally, follow the README instructions for SDK setup."
-          mkdir -p build
-          echo "Pebble SDK watchface project - see README for build instructions" > build/README.txt
-        fi
+        pebble build
+        ls -la build/
         
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
@@ -106,15 +101,23 @@ jobs:
         body: |
           ## Pebble SDK Watchface Release
           
-          This release contains the Pebble SDK 3 watchface source code.
+          This release contains the built `.pbw` file that can be installed on your Pebble device.
           
-          **Note**: Due to Pebble's shutdown, the official SDK download servers are no longer available.
-          To build this watchface, you'll need to:
-          1. Set up a Pebble SDK environment using community resources
-          2. Clone this repository
-          3. Run `pebble build` in the project directory
+          ### Installation
           
-          See the README.md for detailed setup instructions.
+          **Method 1: CloudPebble (Recommended)**
+          1. Install the Pebble app from [rePebble.com/app](https://www.repebble.com/app)
+          2. Enable Dev Connect in the app (Devices → 3 dots → Enable Dev Connect)
+          3. Sign into GitHub
+          4. Download the `.pbw` file from this release
+          5. Use `pebble install --cloudpebble` or sideload via the app
+          
+          **Method 2: Manual Sideload**
+          1. Download the `.pbw` file from this release
+          2. Transfer to your phone
+          3. Open with the Pebble app
+          
+          See the [README.md](https://github.com/gthoma17/basic-watch-face-pebblejs/blob/main/README.md) for more details.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

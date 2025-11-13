@@ -50,15 +50,22 @@ pebble clean
 ### Install to Device/Emulator
 ```bash
 pebble install --emulator basalt
+pebble install --cloudpebble  # Recommended for physical devices
 pebble install --phone <PHONE_IP>
 ```
 
-**Note**: Building requires the Pebble SDK to be installed. The recommended approach is to use Python 3 with a virtual environment:
+**Note**: Building requires the Pebble SDK to be installed. Full instructions at [developer.repebble.com/sdk](https://developer.repebble.com/sdk/).
 
+Quick install:
 ```bash
-python3 -m venv ~/.pebble-sdk
-source ~/.pebble-sdk/bin/activate
-pip3 install pebble-sdk
+# Install uv (fast Python package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Pebble CLI
+uv tool install pebble-tool
+
+# Install SDK
+pebble sdk install latest
 ```
 
 ## Code Style and Conventions
@@ -115,10 +122,11 @@ Pipeline stages:
 ## Important Notes
 
 1. **Pebble SDK Specifics**:
-   - Uses Python 3 (not Python 2) for build tooling
+   - Uses modern `uv` tool for fast installation (not pip/virtualenv)
+   - SDK available at [developer.repebble.com/sdk](https://developer.repebble.com/sdk/)
    - The SDK is not included in the repository
    - Local development requires Pebble SDK installation
-   - CI pipeline installs SDK automatically
+   - CI pipeline installs SDK automatically using `uv tool install pebble-tool`
 
 2. **Platform Support**:
    - **aplite**: Original Pebble (black & white)
@@ -135,6 +143,11 @@ Pipeline stages:
    - Always pair create/destroy calls (windows, layers, etc.)
    - Use static variables for persistent data
    - Clean up in deinit() function
+
+5. **Installation Methods**:
+   - **CloudPebble**: `pebble install --cloudpebble` (recommended)
+   - **Emulator**: `pebble install --emulator basalt`
+   - **Direct IP**: `pebble install --phone <IP>`
 
 ## Minimal Changes Philosophy
 
@@ -155,7 +168,7 @@ Before submitting changes:
 
 ## Getting Help
 
-- Review the [Pebble SDK documentation](https://developer.rebble.io/)
+- Review the [Pebble SDK documentation](https://developer.repebble.com/sdk/)
 - Check [Rebble](https://rebble.io/) for community support
 - Refer to README.md for setup instructions
 - Look at CI workflow for build requirements
