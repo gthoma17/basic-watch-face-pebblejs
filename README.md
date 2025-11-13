@@ -28,9 +28,9 @@ The watch face displays the current time in the center of the screen with a clea
 
 ### Setting up Pebble SDK
 
-**Option 1: Using Community Fork (Recommended - Python 3)**
+**Option 1: Using pebble-tool (Recommended - Python 3)**
 
-The community maintains a Python 3 compatible version of the Pebble SDK:
+The community maintains a Python 3 compatible version of the Pebble tools:
 
 ```bash
 # Install dependencies (Ubuntu/Debian)
@@ -40,16 +40,30 @@ sudo apt-get install python3-pip python3-dev python3-virtualenv
 python3 -m venv ~/.pebble-sdk
 source ~/.pebble-sdk/bin/activate
 
-# Install Pebble SDK
-pip3 install pebble-sdk
+# Install pebble-tool (not pebble-sdk)
+pip3 install pebble-tool
 
 # Verify installation
 pebble --version
 ```
 
-**Option 2: Using RebbleOS SDK**
+**Important Note**: Due to Pebble's shutdown, the official SDK download servers (sdk.core.store) are no longer operational. To complete the SDK setup, you'll need to obtain the SDK core files through alternative means:
 
-For rePebble/community-maintained Pebble devices, you can use the RebbleOS SDK tools.
+1. **Use a local SDK installation** if you have one from before Pebble's shutdown
+2. **Use RebbleOS SDK** - Check [Rebble's developer resources](https://developer.rebble.io/)
+3. **Find community mirrors** of the SDK core files
+
+**Option 2: Docker-based Pebble SDK**
+
+You can use a Docker container with a pre-configured Pebble SDK:
+
+```bash
+# Pull a community Pebble SDK Docker image
+docker pull pebble/sdk
+
+# Build from within the container
+docker run --rm -v "$(pwd):/pebble" pebble/sdk pebble build
+```
 
 ### Installation
 
