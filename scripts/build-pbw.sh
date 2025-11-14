@@ -1,50 +1,64 @@
 #!/bin/bash
 
-# Build script to create .pbw (Pebble Watch Bundle) artifact
-# This script packages the Moddable application into a .pbw file for distribution
+# Build script for Pebble SDK watchface
+# Creates .pbw (Pebble Watch Bundle) using Pebble SDK
 
 set -e
 
-# Get version from package.json or use default
 VERSION=${1:-"1.0.0"}
 APP_NAME="basic-watch-face"
 BUILD_DIR="build"
-PBW_NAME="${APP_NAME}-${VERSION}.pbw"
 
-echo "Building ${APP_NAME} version ${VERSION}..."
+echo "Building Pebble watchface ${APP_NAME} version ${VERSION}..."
 
-# Create build directory structure
-mkdir -p "${BUILD_DIR}/app"
+# Check if pebble command is available
+if ! command -v pebble &> /dev/null; then
+    echo "Error: Pebble SDK not found in PATH"
+    echo ""
+    echo "To install the Pebble SDK, visit: https://developer.repebble.com/sdk/"
+    echo ""
+    echo "Quick install:"
+    echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "  uv tool install pebble-tool"
+    echo "  pebble sdk install latest"
+    exit 1
+fi
 
-# Copy application files to build directory
-echo "Packaging application files..."
-cp -r src/* "${BUILD_DIR}/app/" 2>/dev/null || true
-cp manifest.json "${BUILD_DIR}/" 2>/dev/null || true
+# Check if SDK is installed
+if ! pebble sdk list 2>&1 | grep -q "SDK"; then
+    echo "Warning: Pebble SDK core not detected"
+    echo "Installing latest SDK..."
+    pebble sdk install latest || {
+        echo "SDK installation failed."
+        echo "Please visit https://developer.repebble.com/sdk/ for installation instructions."
+        exit 1
+    }
+fi
 
-# Create package info file
-cat > "${BUILD_DIR}/package.json" << EOF
-{
-  "name": "${APP_NAME}",
-  "version": "${VERSION}",
-  "description": "A simple watch face using Moddable SDK",
-  "type": "watchface",
-  "buildDate": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-}
-EOF
+# Clean any previous builds
+echo "Cleaning previous builds..."
+pebble clean || true
+rm -rf "${BUILD_DIR}"
 
-# Package as .pbw (which is a zip file)
-echo "Creating .pbw bundle..."
-cd "${BUILD_DIR}"
-zip -q -r "../${PBW_NAME}" . -x "*.DS_Store"
-cd ..
+# Build the watchface for all platforms
+echo "Building watchface..."
+pebble build
 
-# Move .pbw back to build directory
-mv "${PBW_NAME}" "${BUILD_DIR}/"
+# Check if build was successful
+if [ -f "${BUILD_DIR}/${APP_NAME}.pbw" ]; then
+    echo "✓ Successfully created ${BUILD_DIR}/${APP_NAME}.pbw"
+    echo ""
+    echo "Build artifact details:"
+    ls -lh "${BUILD_DIR}/${APP_NAME}.pbw"
+    echo ""
+    echo "Installation options:"
+    echo "  - Emulator: pebble install --emulator basalt"
+    echo "  - CloudPebble: pebble install --cloudpebble"
+    echo "  - Direct IP: pebble install --phone <PHONE_IP>"
+else
+    echo "✗ Build failed - no .pbw file created"
+    exit 1
+fi
 
-echo "✓ Successfully created ${BUILD_DIR}/${PBW_NAME}"
-echo "Build artifact ready for distribution"
 
-# List contents for verification
-echo ""
-echo "Build artifact details:"
-ls -lh "${BUILD_DIR}/${PBW_NAME}"
+

@@ -1,17 +1,13 @@
 {
   "name": "basic-watch-face",
   "version": "1.0.0",
-  "description": "A simple watch face using Moddable SDK that displays time in large font with 12hr/24hr format settings",
-  "keywords": ["moddable", "watchface", "time", "smartwatch"],
+  "description": "A simple watch face for Pebble smartwatches that displays time in large font",
+  "keywords": ["pebble", "watchface", "time", "smartwatch", "diorite"],
   "author": "",
   "license": "MIT",
   "scripts": {
-    "test": "jest",
-    "build": "mcconfig -d -m -p simulator",
-    "build:device": "mcconfig -d -m",
-    "build:pbw": "./scripts/build-pbw.sh"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0"
+    "build": "pebble build",
+    "clean": "pebble clean",
+    "install": "pebble install --emulator basalt"
   }
 }

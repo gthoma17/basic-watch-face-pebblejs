@@ -9,33 +9,9 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    
-    permissions:
-      contents: read
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run tests
-      run: npm test
-      
   build:
-    name: Build Watch Face
+    name: Build Pebble Watch Face
     runs-on: ubuntu-latest
-    needs: test
     
     permissions:
       contents: read
@@ -44,27 +20,58 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Extract version from tag
-      id: get_version
-      run: |
-        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-          VERSION="${GITHUB_REF#refs/tags/v}"
-        else
-          VERSION="dev-${GITHUB_SHA::7}"
-        fi
-        echo "version=${VERSION}" >> $GITHUB_OUTPUT
-        echo "Building version: ${VERSION}"
+    - name: Setup Python 3
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
         
-    - name: Build .pbw artifact
+    - name: Install system dependencies
       run: |
-        chmod +x scripts/build-pbw.sh
-        ./scripts/build-pbw.sh ${{ steps.get_version.outputs.version }}
+        sudo apt-get update
+        sudo apt-get install -y \
+          python3-pip python3-venv nodejs npm \
+          libsdl1.2debian libfdt1 \
+          libfreetype6-dev libpng-dev pkg-config \
+          libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev \
+          gcc-arm-none-eabi libnewlib-arm-none-eabi
+        
+    - name: Install uv and Pebble SDK
+      run: |
+        # Install uv (fast Python package manager)
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        
+        # Add uv to PATH
+        export PATH="$HOME/.cargo/bin:$PATH"
+        
+        # Install pebble-tool
+        uv tool install pebble-tool
+        
+        # Add pebble to PATH
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+    - name: Verify Pebble SDK installation
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        pebble --version
+        
+    - name: Install Pebble SDK Core
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        pebble sdk install latest
+        
+    - name: Build watchface
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        pebble clean || true
+        pebble build
+        ls -la build/
         
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
-        name: watch-face-pbw
-        path: build/*.pbw
+        name: pebble-watchface
+        path: build/*
+        if-no-files-found: ignore
         
   release:
     name: Create Release
@@ -82,14 +89,36 @@ jobs:
     - name: Download build artifact
       uses: actions/download-artifact@v4
       with:
-        name: watch-face-pbw
+        name: pebble-watchface
         path: build/
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: build/*.pbw
+        files: build/*
         generate_release_notes: true
         draft: false
+        body: |
+          ## Pebble SDK Watchface Release
+          
+          This release contains the built `.pbw` file that can be installed on your Pebble device.
+          
+          ### Installation
+          
+          **Method 1: CloudPebble (Recommended)**
+          1. Install the Pebble app from [rePebble.com/app](https://www.repebble.com/app)
+          2. Enable Dev Connect in the app (Devices → 3 dots → Enable Dev Connect)
+          3. Sign into GitHub
+          4. Download the `.pbw` file from this release
+          5. Use `pebble install --cloudpebble` or sideload via the app
+          
+          **Method 2: Manual Sideload**
+          1. Download the `.pbw` file from this release
+          2. Transfer to your phone
+          3. Open with the Pebble app
+          
+          See the [README.md](https://github.com/gthoma17/basic-watch-face-pebblejs/blob/main/README.md) for more details.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
